@@ -1,0 +1,50 @@
+@import "tailwindcss";
+
+@theme {
+  /* SurePro brand palette -- sampled from the product UI reference */
+  --color-primary: #0e8f5d;
+  --color-primary-dark: #0a6f48;
+  --color-primary-light: #e6f5ee;
+  --color-ink: #14171c;
+  --color-ink-soft: #4b5259;
+  --color-muted: #7a828a;
+  --color-border: #e7e9ec;
+  --color-surface: #ffffff;
+  --color-bg: #f7f8fa;
+  --color-danger: #d64545;
+  --color-warning: #d99a1b;
+
+  --font-sans: "Inter", "SF Pro Text", system-ui, -apple-system, "Segoe UI", sans-serif;
+
+  --radius-card: 1.25rem;
+  --radius-control: 0.85rem;
+}
+
+@layer base {
+  html {
+    -webkit-tap-highlight-color: transparent;
+  }
+  body {
+    background-color: var(--color-bg);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    overscroll-behavior-y: none;
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+}
+
+@layer utilities {
+  .mobile-shell {
+    max-width: 26rem;
+    margin-inline: auto;
+    min-height: 100dvh;
+    background-color: var(--color-surface);
+    position: relative;
+  }
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
