@@ -1,5 +1,4 @@
 import { X } from 'lucide-react'
-import { Button } from '../../../components/ui/Button'
 import { clsx } from '@/utils/clsx'
 
 const SORT_OPTIONS = [
@@ -8,14 +7,22 @@ const SORT_OPTIONS = [
   { value: 'jobs', label: 'Most jobs completed' },
 ]
 
-export function FilterSheet({ open, onClose, sortBy, onSortChange }) {
+export function FilterSheet({
+  open,
+  onClose,
+  sortBy,
+  onSortChange,
+}) {
   if (!open) return null
 
   return (
-    <div className="fixed inset-0 z-20 flex items-end justify-center bg-black/40">
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40">
       <div className="mobile-shell w-full rounded-t-card bg-surface p-6">
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-lg font-bold text-ink">Sort &amp; filter</h2>
+          <h2 className="text-lg font-bold text-ink">
+            Sort &amp; filter
+          </h2>
+
           <button
             type="button"
             onClick={onClose}
@@ -26,7 +33,10 @@ export function FilterSheet({ open, onClose, sortBy, onSortChange }) {
           </button>
         </div>
 
-        <p className="mb-2 text-sm font-medium text-ink-soft">Sort by</p>
+        <p className="mb-2 text-sm font-medium text-ink-soft">
+          Sort by
+        </p>
+
         <div className="space-y-2">
           {SORT_OPTIONS.map((option) => (
             <button
@@ -46,7 +56,13 @@ export function FilterSheet({ open, onClose, sortBy, onSortChange }) {
         </div>
 
         <div className="mt-6">
-          <Button onClick={onClose}>Apply</Button>
+          <button
+            type="button"
+            onClick={onClose}
+            className="w-full rounded-control bg-primary px-4 py-3 text-sm font-semibold text-white"
+          >
+            Apply
+          </button>
         </div>
       </div>
     </div>

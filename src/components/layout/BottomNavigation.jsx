@@ -7,16 +7,16 @@ import { ROUTES } from '@/constants/routes'
 // ship in Phases 4, 6 and 9. Only Home + Discover are wired up in Phase 2.
 const TABS = [
   { icon: Home, label: 'Home', to: ROUTES.HOME, enabled: true },
-  { icon: Search, label: 'Discover', to: ROUTES.HOME, enabled: true },
-  { icon: LayoutGrid, label: 'Feed', to: null, enabled: false },
-  { icon: Briefcase, label: 'Jobs', to: null, enabled: false },
-  { icon: User, label: 'Profile', to: null, enabled: false },
+  { icon: Search, label: 'Discover', to: ROUTES.DISCOVER, enabled: true },
+  { icon: LayoutGrid, label: 'Feed', to: ROUTES.FEED, enabled: true },
+  { icon: Briefcase, label: 'Jobs', to: ROUTES.MY_JOBS, enabled: true },
+  { icon: User, label: 'Profile', to: ROUTES.PROFILE, enabled: true },
 ]
 
 export function BottomNavigation() {
   return (
     <nav className="safe-bottom sticky bottom-0 z-10 border-t border-border bg-surface">
-      <div className="mobile-shell flex items-stretch justify-between px-2 py-1.5">
+      <div className="mx-auto flex max-w-md items-stretch justify-between px-2 py-1.5">
         {TABS.map(({ icon: Icon, label, to, enabled }) =>
           enabled ? (
             <NavLink

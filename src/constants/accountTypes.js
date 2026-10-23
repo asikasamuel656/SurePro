@@ -1,17 +1,23 @@
 export const ACCOUNT_TYPES = {
-  CUSTOMER: 'customer',
-  PROFESSIONAL: 'professional',
+  CUSTOMER: 'Customer account',
+  PROFESSIONAL: 'Professional account',
+  BUSINESS: 'Business account'
 }
 
 export const ACCOUNT_TYPE_OPTIONS = [
   {
     value: ACCOUNT_TYPES.CUSTOMER,
-    title: 'I need a professional',
-    description: 'Find, hire and track trusted local pros for any job.',
+    title: 'Personal Account',
+    description: 'Find, compare, hire and track trusted local professionals.',
   },
   {
     value: ACCOUNT_TYPES.PROFESSIONAL,
-    title: "I'm a professional",
-    description: 'Get discovered, build your reputation and grow your work.',
+    title: "Professional Account",
+    description: 'Showcase your work, get hired, and grow your professional reputation.',
+  },
+  {
+    value: ACCOUNT_TYPES.BUSINESS,
+    title: "Business Account",
+    description: "Manage multiple professionals, organize service requests, and grow your business on SurePro"
   },
 ]

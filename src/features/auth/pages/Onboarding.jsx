@@ -16,7 +16,7 @@ export function Onboarding() {
 
   return (
     <div className="min-h-dvh bg-bg">
-      <div className="mobile-shell flex min-h-dvh flex-col justify-between px-6 py-10">
+      <div className="mobile-shell mx-auto flex min-h-dvh max-w-md flex-col justify-between px-6 py-10">
         <div className="flex flex-1 flex-col items-center justify-center gap-8">
           <Logo size="lg" />
           <div className="text-center">

@@ -1,27 +1,40 @@
-import { Star, CheckCircle2, CalendarClock, Users } from 'lucide-react'
+import { CalendarClock, CheckCircle2, Clock3, Repeat } from 'lucide-react'
 
-const STATS = [
-  { key: 'rating', icon: Star, label: 'Rating' },
-  { key: 'completedJobs', icon: CheckCircle2, label: 'Jobs done' },
-  { key: 'yearsExperience', icon: CalendarClock, label: 'Years' },
-  { key: 'followers', icon: Users, label: 'Followers' },
-]
-
-export function StatsRow({ rating, completedJobs, yearsExperience, followers }) {
-  const values = {
-    rating: rating ? rating.toFixed(1) : 'New',
-    completedJobs: completedJobs ?? 0,
-    yearsExperience: yearsExperience ?? '—',
-    followers: followers ?? 0,
-  }
+export function StatsRow({ yearsExperience, completedJobs, completionRate, repeatCustomers }) {
+  const stats = [
+    {
+      key: 'years',
+      icon: CalendarClock,
+      value: yearsExperience != null ? `${yearsExperience}+` : '—',
+      label: 'Years Exp.',
+    },
+    {
+      key: 'jobs',
+      icon: CheckCircle2,
+      value: completedJobs ?? 0,
+      label: 'Jobs done',
+    },
+    {
+      key: 'ontime',
+      icon: Clock3,
+      value: completionRate != null ? `${Math.round(completionRate)}%` : '—',
+      label: 'Completion',
+    },
+    {
+      key: 'repeat',
+      icon: Repeat,
+      value: repeatCustomers ?? 0,
+      label: 'Repeat clients',
+    },
+  ]
 
   return (
-    <div className="grid grid-cols-4 gap-2 rounded-card border border-border bg-surface p-3">
-      {STATS.map(({ key, icon: Icon, label }) => (
-        <div key={key} className="flex flex-col items-center gap-1 text-center">
+    <div className="grid grid-cols-4 gap-2">
+      {stats.map(({ key, icon: Icon, value, label }) => (
+        <div key={key} className="flex flex-col items-center gap-1 rounded-card border border-border bg-surface py-3 text-center">
           <Icon className="h-4 w-4 text-primary" />
-          <span className="text-sm font-bold text-ink">{values[key]}</span>
-          <span className="text-[11px] text-muted">{label}</span>
+          <span className="text-sm font-bold text-ink">{value}</span>
+          <span className="text-[10px] leading-tight text-muted">{label}</span>
         </div>
       ))}
     </div>

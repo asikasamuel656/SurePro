@@ -15,8 +15,11 @@ export async function fetchProfessionalProfile(professionalId) {
       is_available,
       verification_status,
       years_experience,
+      completion_rate,
+      response_rate,
+      repeat_customers,
       category:categories ( id, name, icon ),
-      profile:profiles ( full_name, avatar_url, phone )
+      profile:profiles ( full_name, avatar_url, username )
     `
     )
     .eq('id', professionalId)
@@ -56,39 +59,43 @@ export async function fetchReviews(professionalId) {
   return data
 }
 
-export async function fetchFollowerCount(professionalId) {
-  const { count, error } = await supabase
-    .from('follows')
-    .select('*', { count: 'exact', head: true })
-    .eq('professional_id', professionalId)
-  if (error) throw error
-  return count ?? 0
-}
-
-export async function fetchIsFollowing(professionalId, userId) {
-  if (!userId) return false
+export async function updateProfessionalProfile(professionalId, updates) {
   const { data, error } = await supabase
-    .from('follows')
-    .select('professional_id')
-    .eq('professional_id', professionalId)
-    .eq('follower_id', userId)
-    .maybeSingle()
+    .from('professionals')
+    .update(updates)
+    .eq('id', professionalId)
+    .select()
+    .single()
   if (error) throw error
-  return !!data
+  return data
 }
 
-export async function follow(professionalId, userId) {
-  const { error } = await supabase
-    .from('follows')
-    .insert({ professional_id: professionalId, follower_id: userId })
+export async function addService({ professionalId, name, description, priceMin, priceMax }) {
+  const { data, error } = await supabase
+    .from('services')
+    .insert({ professional_id: professionalId, name, description, price_min: priceMin || null, price_max: priceMax || null })
+    .select()
+    .single()
+  if (error) throw error
+  return data
+}
+
+export async function deleteService(serviceId) {
+  const { error } = await supabase.from('services').delete().eq('id', serviceId)
   if (error) throw error
 }
 
-export async function unfollow(professionalId, userId) {
-  const { error } = await supabase
-    .from('follows')
-    .delete()
-    .eq('professional_id', professionalId)
-    .eq('follower_id', userId)
+export async function addPortfolioItem({ professionalId, imageUrl, caption }) {
+  const { data, error } = await supabase
+    .from('portfolio_items')
+    .insert({ professional_id: professionalId, image_url: imageUrl, caption })
+    .select()
+    .single()
+  if (error) throw error
+  return data
+}
+
+export async function deletePortfolioItem(itemId) {
+  const { error } = await supabase.from('portfolio_items').delete().eq('id', itemId)
   if (error) throw error
 }

@@ -1,7 +1,6 @@
 @import "tailwindcss";
 
 @theme {
-  /* SurePro brand palette -- sampled from the product UI reference */
   --color-primary: #0e8f5d;
   --color-primary-dark: #0a6f48;
   --color-primary-light: #e6f5ee;
@@ -14,7 +13,8 @@
   --color-danger: #d64545;
   --color-warning: #d99a1b;
 
-  --font-sans: "Inter", "SF Pro Text", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-sans: "Inter", "SF Pro Text", system-ui, -apple-system,
+    "Segoe UI", sans-serif;
 
   --radius-card: 1.25rem;
   --radius-control: 0.85rem;
@@ -23,13 +23,21 @@
 @layer base {
   html {
     -webkit-tap-highlight-color: transparent;
+    overflow-x: hidden;
   }
+
   body {
+    margin: 0;
     background-color: var(--color-bg);
     color: var(--color-ink);
     font-family: var(--font-sans);
-    overscroll-behavior-y: none;
+    overflow-x: hidden;
   }
+
+  #root {
+    min-height: 100dvh;
+  }
+
   :focus-visible {
     outline: 2px solid var(--color-primary);
     outline-offset: 2px;
@@ -38,13 +46,22 @@
 
 @layer utilities {
   .mobile-shell {
-    max-width: 26rem;
-    margin-inline: auto;
+    width: 100%;
     min-height: 100dvh;
     background-color: var(--color-surface);
     position: relative;
   }
+
   .safe-bottom {
     padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .no-scrollbar {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
   }
 }

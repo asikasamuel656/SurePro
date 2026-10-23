@@ -1,6 +1,10 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { MapPinned, MapPin } from 'lucide-react'
+import {
+  MapPinned,
+  MapPin,
+} from 'lucide-react'
+
 import { Button } from '../../../components/ui/Button'
 import { useGeolocation } from '../hooks/useGeolocation'
 import { reverseGeocode } from '../services/geocoding'
@@ -10,48 +14,147 @@ import { ROUTES } from '@/constants/routes'
 
 export function LocationPermission() {
   const navigate = useNavigate()
-  const { requestLocation, isLocating, error } = useGeolocation()
-  const setLocation = useLocationStore((s) => s.setLocation)
-  const [pickingOnMap, setPickingOnMap] = useState(false)
-  const [resolving, setResolving] = useState(false)
 
-  const finishWithCoords = async (coords, permissionStatus) => {
+  const {
+    requestLocation,
+    isLocating,
+    error,
+  } = useGeolocation()
+
+  const setLocation = useLocationStore(
+    (state) => state.setLocation
+  )
+
+  const savedLocation = useLocationStore(
+    (state) => state.location
+  )
+
+  const [pickingOnMap, setPickingOnMap] =
+    useState(false)
+
+  const [resolving, setResolving] =
+    useState(false)
+
+  const finishWithCoords = async (
+    coords,
+    permissionStatus
+  ) => {
+    if (
+      coords?.latitude == null ||
+      coords?.longitude == null
+    ) {
+      return
+    }
+
     setResolving(true)
-    let label = null
+
     try {
-      label = await reverseGeocode(coords)
+      const location =
+        await reverseGeocode(coords)
+
+      setLocation({
+        coords,
+
+        address:
+          location.address,
+
+        city:
+          location.city,
+
+        state:
+          location.state,
+
+        country:
+          location.country,
+
+        postcode:
+          location.postcode,
+
+        permissionStatus,
+      })
+
+      navigate(ROUTES.HOME)
     } catch {
-      label = 'Your area'
+      setLocation({
+        coords,
+
+        address:
+          'Selected location',
+
+        city: null,
+        state: null,
+        country: null,
+        postcode: null,
+
+        permissionStatus,
+      })
+
+      navigate(ROUTES.HOME)
     } finally {
       setResolving(false)
     }
-    setLocation({ coords, label, permissionStatus })
-    navigate(ROUTES.HOME)
   }
 
-  const handleUseCurrentLocation = async () => {
-    try {
-      const coords = await requestLocation()
-      await finishWithCoords(coords, 'granted')
-    } catch {
-      // error state already surfaced via the hook
+  const handleUseCurrentLocation =
+    async () => {
+      try {
+        const coords =
+          await requestLocation()
+
+        await finishWithCoords(
+          coords,
+          'granted'
+        )
+      } catch {
+        // Error is already displayed.
+      }
     }
-  }
 
   const handleSkip = () => {
-    setLocation({ coords: null, label: null, permissionStatus: 'denied' })
+    setLocation({
+      coords: null,
+      address: null,
+      city: null,
+      state: null,
+      country: null,
+      postcode: null,
+      permissionStatus: 'denied',
+    })
+
     navigate(ROUTES.HOME)
   }
+
+  const initialCenter =
+    savedLocation?.latitude != null &&
+    savedLocation?.longitude != null
+      ? {
+          latitude:
+            savedLocation.latitude,
+          longitude:
+            savedLocation.longitude,
+        }
+      : null
 
   if (pickingOnMap) {
     return (
       <div className="min-h-dvh bg-bg">
         <div className="mobile-shell flex min-h-dvh flex-col px-6 py-6">
-          <h1 className="mb-4 text-xl font-bold text-ink">Choose your location</h1>
+          <h1 className="mb-4 text-xl font-bold text-ink">
+            Choose your location
+          </h1>
+
           <div className="flex-1">
             <LocationPickerMap
-              onConfirm={(coords) => finishWithCoords(coords, 'manual')}
-              onCancel={() => setPickingOnMap(false)}
+              initialCenter={initialCenter}
+              onConfirm={(coords) =>
+                finishWithCoords(
+                  coords,
+                  'manual'
+                )
+              }
+              onCancel={() =>
+                setPickingOnMap(false)
+              }
             />
           </div>
         </div>
@@ -66,27 +169,48 @@ export function LocationPermission() {
           <span className="flex h-20 w-20 items-center justify-center rounded-full bg-primary-light text-primary">
             <MapPinned className="h-9 w-9" />
           </span>
+
           <div>
-            <h1 className="text-2xl font-bold text-ink">Allow SurePro to access your location</h1>
+            <h1 className="text-2xl font-bold text-ink">
+              Allow SurePro to access your location
+            </h1>
+
             <p className="mt-2 max-w-xs text-sm text-muted">
               This helps us show professionals near you and share accurate job locations.
-              You can change this anytime in Settings.
+              You can change this anytime.
             </p>
           </div>
-          {error && <p className="text-sm text-danger">{error.message}</p>}
+
+          {error && (
+            <p className="text-sm text-danger">
+              {error.message}
+            </p>
+          )}
         </div>
 
         <div className="w-full space-y-3">
           <Button
-            onClick={handleUseCurrentLocation}
-            isLoading={isLocating || resolving}
+            onClick={
+              handleUseCurrentLocation
+            }
+            isLoading={
+              isLocating || resolving
+            }
             icon={MapPinned}
           >
             Use Current Location
           </Button>
-          <Button variant="secondary" icon={MapPin} onClick={() => setPickingOnMap(true)}>
+
+          <Button
+            variant="secondary"
+            icon={MapPin}
+            onClick={() =>
+              setPickingOnMap(true)
+            }
+          >
             Choose on Map
           </Button>
+
           <button
             type="button"
             onClick={handleSkip}

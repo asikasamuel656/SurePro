@@ -1,0 +1,114 @@
+# SurePro V2 — auth shell, mock backend & social feed
+
+This adds the three things you asked for on top of your existing pages, without
+touching the job-model split (dispatch flow and marketplace flow both stay live).
+
+## What's new
+
+```
+src/
+  lib/mockBackend.js         ← in-memory mock backend (auth + professions + feed)
+  context/AuthContext.jsx    ← React context wrapping the mock auth
+  components/profession_modal.jsx  ← searchable single-select profession picker
+  pages/login.jsx            ← was missing entirely
+  pages/customer_register.jsx← was missing entirely (providers had a wizard, customers had none)
+  pages/role_selection.jsx   ← your file + a "sign in" shortcut to Login
+  pages/provider_register.jsx← Step 3 rebuilt around the profession modal (see below)
+  pages/feed.jsx             ← the social layer from the V2 spec — had no UI yet
+  pages/admin_dashboard.jsx  ← your file + one class-name fix (see below)
+  App.jsx                    ← routing shell + auth redirect rules
+```
+
+## Drop in your existing files
+
+`App.jsx` imports two files **unchanged** from what you already have — copy them into
+`src/pages/` as-is:
+
+- `customer_dashboard.jsx`
+- `provider_dashboard.jsx`
+
+(`request.jsx` is now included here too, updated — see below. `application_page.jsx`
+is also expected in `src/pages/`, unchanged.)
+
+One small fix worth applying to `customer_dashboard.jsx` while you're in there —
+the avatar div has a duplicated/invalid class string:
+
+```diff
+- <div className="w-13 h-13 w-12 h-12 rounded-full border-2 border-emerald-400 bg-emerald-100 flex items-center justify-center text-base font-medium text-emerald-800">
++ <div className="w-12 h-12 rounded-full border-2 border-emerald-400 bg-emerald-100 flex items-center justify-center text-base font-medium text-emerald-800">
+```
+
+## The single-profession spec fix
+
+The original spec is explicit: **a provider can only choose ONE profession**, via a
+searchable "View All Professions" flow. The old `StepServices` in
+`provider_register.jsx` let providers multi-select from a small category grid — that
+directly contradicted the spec.
+
+It's now `StepProfession`, built around **`components/service_type_picker.jsx`**: a
+grid of common trades (Electrician, Plumber, Cleaner, Painter, AC Technician) with a
+final **"View all"** tile — replacing the old fixed "Carpenters" tile — that opens
+`components/profession_modal.jsx` (search, categories, icons) for anything not shown.
+Single-select only. The same picker is now used in `request.jsx`'s "Service type"
+section too, so both flows behave consistently and no longer each keep their own
+duplicate hard-coded category list.
+
+## Auth & redirect behavior
+
+`AuthContext` + `App.jsx`'s `Shell` implement the rules from the spec:
+
+- Logged-out users always land on **Login** (via role-selection → "sign in" or directly).
+- Logged-in users skip registration and go straight to their dashboard
+  (`customer` → CustomerDashboard, `provider` → ProviderDashboard, `admin` → AdminDashboard).
+- `mockBackend.auth.onAuthChange` drives this reactively, the same shape a real
+  `firebase.auth().onAuthStateChanged` listener would.
+
+Demo accounts seeded in `mockBackend.js` (any password works — the mock doesn't check):
+
+| Email | Role |
+|---|---|
+| `adewale.j@email.com` | provider |
+| `ngozi.kalu@email.com` | customer |
+| `admin@SurePro.ng` | admin |
+
+## The mock backend
+
+`lib/mockBackend.js` is a plain in-memory store — no localStorage, no external
+dependency, resets on reload. Every function is `async` and returns a `Promise`
+so the shape matches what a real Firebase call would look like. When you're ready:
+
+- `auth.register / auth.login / auth.logout / auth.onAuthChange` → Firebase Authentication
+- `getFeed / createPost / toggleReaction / addComment` → Firestore `posts`/`comments`
+- `toggleFollow` → Firestore `followers` collection
+- `getProfessions` → a static `professions` collection (or keep it as a constant — it
+  rarely changes)
+
+Swap the internals; the function signatures were written so calling components
+(`Feed`, `Login`, `provider_register.jsx`, etc.) shouldn't need to change.
+
+## Inconsistencies found — fixed vs. still open
+
+**Fixed:**
+- Multi-select profession bug — now single-select via `ServiceTypePicker` (see above).
+- "Carpenters" fixed tile with no overflow → replaced with a "View all" tile in both
+  `provider_register.jsx` and `request.jsx`, opening the searchable profession modal.
+- `request.jsx` no longer keeps its own duplicate `MOCK_CATEGORIES` — it now reads
+  from the shared `PROFESSIONS` list in `lib/mockBackend.js`.
+- Missing customer registration page.
+- Missing login page.
+- `admin_dashboard.jsx`: `text-red` isn't a valid Tailwind class → `text-red-600`.
+
+**Flagged, not yet fixed (scope call — flag if you want these tackled next):**
+- `admin_dashboard.jsx` still hardcodes its own `MOCK_CATEGORIES` for the Categories
+  tab — worth pointing at the shared `PROFESSIONS` list too.
+- `customer_dashboard.jsx`, `provider_dashboard.jsx`, `application_page.jsx` still use
+  their own local `api` stubs / mock arrays rather than `lib/mockBackend.js`. Left as-is
+  for now since rewiring three large files' worth of job/booking state is a bigger job
+  than this round covered — happy to do that pass next.
+- `Stars` and `Toggle` components are duplicated verbatim across
+  `provider_dashboard.jsx` and `application_page.jsx` — worth factoring into
+  `components/ui.jsx` when you next touch those files.
+- The V2 spec's job-completion "share this as a post?" popup, customer tagging
+  toggle, gamification, messaging, and notifications are still unbuilt — `feed.jsx`
+  covers posts/reactions/comments/follow only, which was the highest-leverage
+  slice for "make people come back even when they're not booking."

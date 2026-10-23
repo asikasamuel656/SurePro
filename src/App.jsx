@@ -2,6 +2,7 @@ import { BrowserRouter } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { AppRoutes } from '@/routes/AppRoutes'
 import { useAuthListener, useProfile } from '@/features/auth/hooks/useAuth'
+import { ErrorBoundary } from '@/components/feedback/ErrorBoundary'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -20,13 +21,15 @@ function AuthBootstrap({ children }) {
 
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
-        <AuthBootstrap>
-          <AppRoutes />
-        </AuthBootstrap>
-      </BrowserRouter>
-    </QueryClientProvider>
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <BrowserRouter>
+          <AuthBootstrap>
+            <AppRoutes />
+          </AuthBootstrap>
+        </BrowserRouter>
+      </QueryClientProvider>
+    </ErrorBoundary>
   )
 }
 

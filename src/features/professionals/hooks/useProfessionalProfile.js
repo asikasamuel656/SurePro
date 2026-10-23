@@ -1,11 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import {
-  fetchProfessionalProfile,
-  fetchServices,
-  fetchPortfolio,
-  fetchReviews,
-  fetchFollowerCount,
-} from '../services/professionalApi'
+import { fetchProfessionalProfile, fetchServices, fetchPortfolio, fetchReviews } from '../services/professionalApi'
 
 export function useProfessionalProfile(professionalId) {
   const profileQuery = useQuery({
@@ -32,18 +26,11 @@ export function useProfessionalProfile(professionalId) {
     enabled: !!professionalId,
   })
 
-  const followerCountQuery = useQuery({
-    queryKey: ['professional', professionalId, 'followerCount'],
-    queryFn: () => fetchFollowerCount(professionalId),
-    enabled: !!professionalId,
-  })
-
   return {
     profile: profileQuery.data,
     services: servicesQuery.data ?? [],
     portfolio: portfolioQuery.data ?? [],
     reviews: reviewsQuery.data ?? [],
-    followerCount: followerCountQuery.data ?? 0,
     isLoading: profileQuery.isLoading,
     isError: profileQuery.isError,
   }

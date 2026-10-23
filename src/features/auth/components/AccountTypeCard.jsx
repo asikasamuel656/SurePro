@@ -1,10 +1,11 @@
-import { Check, User, Wrench } from 'lucide-react'
+import { Check, User, Wrench, Building2 } from 'lucide-react'
 import { clsx } from '@/utils/clsx'
 import { ACCOUNT_TYPES } from '@/constants/accountTypes'
 
 const ICONS = {
   [ACCOUNT_TYPES.CUSTOMER]: User,
   [ACCOUNT_TYPES.PROFESSIONAL]: Wrench,
+  [ACCOUNT_TYPES.BUSINESS]: Building2,
 }
 
 export function AccountTypeCard({ option, selected, onSelect }) {

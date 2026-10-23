@@ -7,7 +7,7 @@ export function AuthLayout({ children, onBack, showBack = true, className }) {
 
   return (
     <div className="min-h-dvh bg-bg">
-      <div className="mobile-shell flex min-h-dvh flex-col px-6 pb-8 pt-6">
+      <div className="mobile-shell mx-auto flex min-h-dvh max-w-md flex-col px-6 pb-8 pt-6">
         {showBack && (
           <button
             type="button"

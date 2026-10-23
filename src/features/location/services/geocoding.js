@@ -1,38 +1,121 @@
-// Uses OpenStreetMap's free Nominatim API for reverse geocoding, keeping
-// SurePro's maps stack entirely Google-free per product decision #12.
 const NOMINATIM_BASE = 'https://nominatim.openstreetmap.org'
 
-export async function reverseGeocode({ latitude, longitude }) {
-  const url = `${NOMINATIM_BASE}/reverse?format=jsonv2&lat=${latitude}&lon=${longitude}`
+async function requestNominatim(url) {
   const response = await fetch(url, {
-    headers: { Accept: 'application/json' },
+    headers: {
+      Accept: 'application/json',
+    },
   })
-  if (!response.ok) throw new Error('Could not resolve that location.')
-  const data = await response.json()
+
+  if (!response.ok) {
+    throw new Error('Could not resolve that location.')
+  }
+
+  return response.json()
+}
+
+export async function reverseGeocode({
+  latitude,
+  longitude,
+}) {
+  if (
+    latitude == null ||
+    longitude == null
+  ) {
+    throw new Error('Latitude and longitude are required.')
+  }
+
+  const url =
+    `${NOMINATIM_BASE}/reverse` +
+    `?format=jsonv2` +
+    `&lat=${encodeURIComponent(latitude)}` +
+    `&lon=${encodeURIComponent(longitude)}` +
+    `&addressdetails=1`
+
+  const data = await requestNominatim(url)
+
   const address = data.address ?? {}
-  return (
-    address.suburb ||
-    address.neighbourhood ||
-    address.city_district ||
-    address.city ||
-    address.town ||
-    data.display_name ||
-    'Selected location'
-  )
+
+  return {
+    latitude,
+    longitude,
+
+    address:
+      data.display_name ||
+      [
+        address.house_number,
+        address.road,
+        address.suburb,
+        address.city,
+        address.state,
+      ]
+        .filter(Boolean)
+        .join(', ') ||
+      'Selected location',
+
+    city:
+      address.city ||
+      address.town ||
+      address.municipality ||
+      address.city_district ||
+      null,
+
+    state:
+      address.state ||
+      null,
+
+    country:
+      address.country ||
+      null,
+
+    postcode:
+      address.postcode ||
+      null,
+  }
 }
 
 export async function searchPlace(query) {
-  const url = `${NOMINATIM_BASE}/search?format=jsonv2&q=${encodeURIComponent(
-    query
-  )}&countrycodes=ng&limit=6`
-  const response = await fetch(url, {
-    headers: { Accept: 'application/json' },
-  })
-  if (!response.ok) throw new Error('Search failed.')
-  const results = await response.json()
-  return results.map((r) => ({
-    label: r.display_name,
-    latitude: parseFloat(r.lat),
-    longitude: parseFloat(r.lon),
+  if (!query?.trim()) {
+    return []
+  }
+
+  const url =
+    `${NOMINATIM_BASE}/search` +
+    `?format=jsonv2` +
+    `&q=${encodeURIComponent(query)}` +
+    `&countrycodes=ng` +
+    `&addressdetails=1` +
+    `&limit=6`
+
+  const results = await requestNominatim(url)
+
+  return results.map((result) => ({
+    label: result.display_name,
+
+    latitude: Number(result.lat),
+
+    longitude: Number(result.lon),
+
+    address:
+      result.display_name,
+
+    city:
+      result.address?.city ||
+      result.address?.town ||
+      result.address?.municipality ||
+      result.address?.city_district ||
+      null,
+
+    state:
+      result.address?.state ||
+      null,
+
+    country:
+      result.address?.country ||
+      null,
+
+    postcode:
+      result.address?.postcode ||
+      null,
   }))
 }

@@ -1,0 +1,20 @@
+{
+  "name": "surepro-otp-server",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Trusted backend for SurePro's 6-digit email OTP verification. Generates, hashes, stores (in Firestore, via the Admin SDK), and verifies OTPs — the frontend never sees or decides anything about validity.",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node index.js"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "express-rate-limit": "^7.4.0",
+    "firebase-admin": "^12.3.1",
+    "resend": "^4.0.1"
+  }
+}
