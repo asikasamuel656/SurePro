@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { updateOwnProfile } from '@/services/profileApi'
+import { updateOwnProfile } from "@/features/profile/services/profileApi";
 import { useAuth } from '@/features/auth/hooks/useAuth'
 
 export function useUpdateProfile() {

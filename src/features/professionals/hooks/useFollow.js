@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { fetchIsFollowing, follow, unfollow } from '../services/professionalApi'
+import { fetchIsFollowing, follow, unfollow } from '../services/followApi'
 import { useAuth } from '@/features/auth/hooks/useAuth'
 
 export function useFollow(professionalId) {
@@ -8,7 +8,7 @@ export function useFollow(professionalId) {
 
   const isFollowingQuery = useQuery({
     queryKey: ['professional', professionalId, 'isFollowing', user?.id],
-    queryFn: () => fetchIsFollowing(professionalId, user.id),
+    queryFn: () => fetchIsFollowing(user.id, professionalId),
     enabled: !!professionalId && !!user?.id,
   })
 
@@ -22,12 +22,12 @@ export function useFollow(professionalId) {
   }
 
   const followMutation = useMutation({
-    mutationFn: () => follow(professionalId, user.id),
+    mutationFn: () => follow(user.id, professionalId),
     onSuccess: invalidate,
   })
 
   const unfollowMutation = useMutation({
-    mutationFn: () => unfollow(professionalId, user.id),
+    mutationFn: () => unfollow(user.id, professionalId),
     onSuccess: invalidate,
   })
 
