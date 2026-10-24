@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom'
 import { Compass } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
-import { ROUTES } from '@/constants/routes'
+import { ROUTES } from "@/constants/routes";
 
 export function NotFound() {
   const navigate = useNavigate()
