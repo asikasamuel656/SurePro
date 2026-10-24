@@ -9,7 +9,7 @@ import { ProfileHeader } from '../components/ProfileHeader'
 import { StatsRow } from '../components/StatsRow'
 import { ServiceList } from '../components/ServiceList'
 import { GalleryGrid } from '../components/GalleryGrid'
-import { ProfileActionBar } from '../components/ProfileActionBar'
+import { ProfileActionBar } from "../components/profileActionBar";
 import { useProfessionalProfile } from '../hooks/useProfessionalProfile'
 import { useFollow } from '../hooks/useFollow'
 import { useSaveProfessional } from '@/features/saved/hooks/useSaveProfessional'

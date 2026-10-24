@@ -1,5 +1,5 @@
 import { ShieldCheck } from 'lucide-react'
-import { clsx } from '@/utils/clsx'
+import { clsx } from "@/utils/Clsx";
 
 export function Logo({ size = 'md', withWordmark = true, className }) {
   const badgeSize = { sm: 'h-9 w-9', md: 'h-14 w-14', lg: 'h-20 w-20' }[size]

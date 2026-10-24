@@ -3,7 +3,7 @@ import { Routes, Route } from 'react-router-dom'
 import { ProtectedRoute } from './ProtectedRoute'
 import { AdminRoute } from './AdminRoute'
 import { RouteLoadingFallback } from '@/components/feedback/RouteLoadingFallback'
-import { ROUTES } from '@/constants/routes'
+import { ROUTES } from "@/constants/Routes";
 
 // Every page is lazy-loaded so the initial bundle only contains what's
 // needed for the very first screen -- the rest downloads as the person

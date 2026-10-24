@@ -1,8 +1,8 @@
 import { useEffect } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
-import { useAuthStore } from '@/store/authStore'
-import { getProfile } from '../services/authApi'
+import { useAuthStore } from "@/store/AuthStore";
+import { getProfile } from '../services/authApi';
 
 /**
  * Subscribes once to Supabase's auth state and mirrors it into the Zustand
