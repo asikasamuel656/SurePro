@@ -14,7 +14,8 @@ import { useNearbyProfessionals } from '../hooks/useNearbyProfessionals'
 import { useFeed } from '@/features/feed/hooks/useFeed'
 import { LocationPrompt } from '@/features/location/components/LocationPrompt'
 import { ROUTES, professionalProfilePath } from '@/constants/routes'
-import { clsx } from "@/utils/clsx";
+import { clsx } from "@/utils/Clsx";
+
 const TABS = [
   { key: 'professionals', label: 'Professionals' },
   { key: 'services', label: 'Services' },
