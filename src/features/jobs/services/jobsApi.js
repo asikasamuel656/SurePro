@@ -228,7 +228,7 @@ export async function fetchJob(jobId) {
    JOB STATUS EVENTS
 ------------------------------------------------------- */
 
-export async function fetchJobStatusEvents(jobId) {
+export async function fetchJobStatusEvents() {
   return []
 }
 
@@ -503,137 +503,28 @@ export async function rejectQuote({
   jobId,
   quoteId,
 }) {
-  console.log('❌ Rejecting quote:', {
-    jobId,
-    quoteId,
-  })
-
-  /*
-   * Get quote + professional profile + job.
-   *
-   * We need the profile ID for notifications.
-   */
-  const {
-    data: quote,
-    error: quoteFetchError,
-  } = await supabase
-    .from('quotes')
-    .select(`
-      id,
-      professional_id,
-      job_id,
-      status,
-
-      professional:professionals (
-        id,
-
-        profile:profiles!professionals_id_fkey (
-          id,
-          full_name
-        )
-      ),
-
-      job:jobs (
-        id,
-        title,
-        customer_id,
-        status
-      )
-    `)
-    .eq('id', quoteId)
-    .eq('job_id', jobId)
-    .single()
-
-  if (quoteFetchError) {
-    console.error(
-      '❌ Could not fetch quote:',
-      quoteFetchError
-    )
-
-    throw quoteFetchError
+  if (!jobId) {
+    throw new Error('Job is required.')
   }
 
-  if (quote.status !== 'pending') {
-    throw new Error(
-      'This quote has already been processed.'
-    )
+  if (!quoteId) {
+    throw new Error('Quote is required.')
   }
 
-  /*
-   * Reject the quote.
-   *
-   * Database status remains "rejected".
-   * QuoteCard displays this as "Cancelled".
-   */
-  const {
-    error: rejectError,
-  } = await supabase
-    .from('quotes')
-    .update({
-      status: 'rejected',
-      updated_at: new Date().toISOString(),
-    })
-    .eq('id', quoteId)
-    .eq('job_id', jobId)
-    .eq('status', 'pending')
+  const { data, error } = await supabase.rpc(
+    'reject_job_quote',
+    {
+      p_job_id: jobId,
+      p_quote_id: quoteId,
+    }
+  )
 
   throwSupabaseError(
     'Rejecting quote',
-    rejectError
+    error
   )
 
-  /*
-   * Notify the professional.
-   *
-   * notifications.user_id should be the profile/auth
-   * user ID, not blindly the professionals table ID.
-   */
-  const professionalUserId =
-    quote.professional?.profile?.id
-
-  if (professionalUserId) {
-    const {
-      error: notificationError,
-    } = await supabase.rpc(
-      'create_notification',
-      {
-        p_user_id:
-          professionalUserId,
-
-        p_type:
-          'quote_rejected',
-
-        p_title:
-          'Quote cancelled',
-
-        p_message: `Your quote for "${
-          quote.job?.title ??
-          'this job'
-        }" was cancelled because another professional was selected or the customer rejected this quote.`,
-
-        p_data: {
-          job_id: jobId,
-          quote_id: quoteId,
-        },
-      }
-    )
-
-    if (notificationError) {
-      console.error(
-        '⚠️ Rejection notification failed:',
-        notificationError
-      )
-    }
-  }
-
-  console.log(
-    '✅ Quote rejected/cancelled'
-  )
-
-  return {
-    ...quote,
-    status: 'rejected',
-  }
+  return data
 }
 
 /* -------------------------------------------------------
@@ -782,16 +673,11 @@ export async function cancelJob(jobId) {
    JOB PHOTOS
 ------------------------------------------------------- */
 
-export async function fetchJobPhotos(jobId) {
+export async function fetchJobPhotos() {
   return []
 }
 
-export async function addJobPhoto({
-  jobId,
-  uploadedBy,
-  photoUrl,
-  stage,
-}) {
+export async function addJobPhoto() {
   throw new Error(
     'Job photos are not available yet.'
   )

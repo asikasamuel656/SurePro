@@ -65,8 +65,18 @@ export function Profile() {
     }
   }, [previewUrl])
 
-  const isProfessional =
-    profile?.account_type === ACCOUNT_TYPES.PROFESSIONAL
+  const accountType = profile?.account_type
+  ?.trim()
+  .toLowerCase()
+
+  const isProfessional = accountType === 'professional'
+
+  const accountLabel =
+    isProfessional
+      ? 'Professional'
+      : accountType === 'business'
+        ? 'Business'
+        : 'Customer'
 
   /*
    * Select and upload profile image.
@@ -292,7 +302,7 @@ export function Profile() {
             </p>
 
             <span className="mt-1 inline-block rounded-full bg-primary-light px-2 py-0.5 text-[11px] font-semibold text-primary">
-              {isProfessional ? 'Professional' : 'Customer'}
+              {accountLabel}
             </span>
           </div>
         </div>

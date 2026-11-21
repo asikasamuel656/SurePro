@@ -1,3 +1,4 @@
+
 import { supabase } from '@/lib/supabase'
 
 /*
@@ -19,11 +20,7 @@ export async function startConversation(
   )
 
   if (error) {
-    console.error(
-      '❌ Could not start conversation:',
-      error
-    )
-
+    console.error('Could not start conversation:', error)
     throw error
   }
 
@@ -45,17 +42,13 @@ export async function fetchConversations(userId) {
     .select('conversation_id, last_read_at')
     .eq('user_id', userId)
 
-  if (participantError) {
-    throw participantError
-  }
+  if (participantError) throw participantError
 
-  const conversationIds = participantRows.map(
+  const conversationIds = (participantRows ?? []).map(
     (row) => row.conversation_id
   )
 
-  if (conversationIds.length === 0) {
-    return []
-  }
+  if (conversationIds.length === 0) return []
 
   const {
     data: conversations,
@@ -75,13 +68,9 @@ export async function fetchConversations(userId) {
       )
     `)
     .in('id', conversationIds)
-    .order('updated_at', {
-      ascending: false,
-    })
+    .order('updated_at', { ascending: false })
 
-  if (conversationsError) {
-    throw conversationsError
-  }
+  if (conversationsError) throw conversationsError
 
   const {
     data: allParticipants,
@@ -91,31 +80,20 @@ export async function fetchConversations(userId) {
     .select('conversation_id, user_id')
     .in('conversation_id', conversationIds)
 
-  if (allParticipantsError) {
-    throw allParticipantsError
-  }
+  if (allParticipantsError) throw allParticipantsError
 
   const otherUserIds = [
     ...new Set(
-      allParticipants
-        .filter(
-          (participant) =>
-            participant.user_id !== userId
-        )
-        .map(
-          (participant) =>
-            participant.user_id
-        )
+      (allParticipants ?? [])
+        .filter((participant) => participant.user_id !== userId)
+        .map((participant) => participant.user_id)
     ),
   ]
 
   let profiles = []
 
   if (otherUserIds.length > 0) {
-    const {
-      data,
-      error,
-    } = await supabase
+    const { data, error } = await supabase
       .from('profiles')
       .select(`
         id,
@@ -126,114 +104,79 @@ export async function fetchConversations(userId) {
       `)
       .in('id', otherUserIds)
 
-    if (error) {
-      throw error
-    }
+    if (error) throw error
 
     profiles = data ?? []
   }
 
   const profileMap = new Map(
-    profiles.map((profile) => [
-      profile.id,
-      profile,
-    ])
+    profiles.map((profile) => [profile.id, profile])
   )
 
   const lastReadByConversation = new Map(
-    participantRows.map((row) => [
+    (participantRows ?? []).map((row) => [
       row.conversation_id,
       row.last_read_at,
     ])
   )
 
-  return conversations.map(
-    (conversation) => {
-      const otherParticipant =
-        allParticipants.find(
-          (participant) =>
-            participant.conversation_id ===
-              conversation.id &&
-            participant.user_id !== userId
-        )
+  return (conversations ?? []).map((conversation) => {
+    const otherParticipant = (allParticipants ?? []).find(
+      (participant) =>
+        participant.conversation_id === conversation.id &&
+        participant.user_id !== userId
+    )
 
-      const otherUser =
-        otherParticipant
-          ? profileMap.get(
-              otherParticipant.user_id
-            )
-          : null
+    const otherUser = otherParticipant
+      ? profileMap.get(otherParticipant.user_id)
+      : null
 
-      const sortedMessages = [
-        ...(conversation.messages ?? []),
-      ].sort(
-        (a, b) =>
-          new Date(b.created_at) -
-          new Date(a.created_at)
+    const sortedMessages = [
+      ...(conversation.messages ?? []),
+    ].sort(
+      (a, b) =>
+        new Date(b.created_at) - new Date(a.created_at)
+    )
+
+    const lastMessage = sortedMessages[0] ?? null
+
+    const lastReadAt = lastReadByConversation.get(
+      conversation.id
+    )
+
+    const unreadCount = sortedMessages.filter((message) => {
+      if (message.sender_id === userId) return false
+
+      if (!lastReadAt) return true
+
+      return (
+        new Date(message.created_at) > new Date(lastReadAt)
       )
+    }).length
 
-      const lastMessage =
-        sortedMessages[0] ?? null
+    return {
+      id: conversation.id,
+      jobId: conversation.job_id,
 
-      const lastReadAt =
-        lastReadByConversation.get(
-          conversation.id
-        )
+      otherUser: otherUser ?? {
+        id: otherParticipant?.user_id,
+        full_name: 'Unknown user',
+        account_type: null,
+        avatar_url: null,
+      },
 
-      const unreadCount =
-        sortedMessages.filter(
-          (message) => {
-            if (
-              message.sender_id ===
-              userId
-            ) {
-              return false
-            }
-
-            if (!lastReadAt) {
-              return true
-            }
-
-            return (
-              new Date(
-                message.created_at
-              ) >
-              new Date(lastReadAt)
-            )
-          }
-        ).length
-
-      return {
-        id: conversation.id,
-        jobId: conversation.job_id,
-
-        otherUser:
-          otherUser ?? {
-            id:
-              otherParticipant?.user_id,
-            full_name:
-              'Unknown user',
-            account_type: null,
-            avatar_url: null,
-          },
-
-        otherUserId:
-          otherParticipant?.user_id,
-
-        lastMessage,
-        unreadCount,
-        updatedAt:
-          conversation.updated_at,
-      }
+      otherUserId: otherParticipant?.user_id,
+      lastMessage,
+      unreadCount,
+      lastReadAt: lastReadAt ?? null,
+      updatedAt: conversation.updated_at,
     }
-  )
+  })
 }
 
 /*
  * ---------------------------------------------------------
  * FETCH SINGLE CONVERSATION IDENTITY
- *
- * This is the ONLY fetchConversation export in this file.
  * ---------------------------------------------------------
  */
 
@@ -241,16 +184,7 @@ export async function fetchConversation(
   conversationId,
   userId
 ) {
-  if (!conversationId || !userId) {
-    return null
-  }
-
-  /*
-   * -------------------------------------------------------
-   * 1. Fetch conversation + participants
-   *    at the same time
-   * -------------------------------------------------------
-   */
+  if (!conversationId || !userId) return null
 
   const [
     {
@@ -279,49 +213,27 @@ export async function fetchConversation(
         user_id,
         last_read_at
       `)
-      .eq(
-        'conversation_id',
-        conversationId
-      ),
+      .eq('conversation_id', conversationId),
   ])
 
-  if (conversationError) {
-    throw conversationError
-  }
+  if (conversationError) throw conversationError
+  if (participantsError) throw participantsError
 
-  if (participantsError) {
-    throw participantsError
-  }
+  const currentParticipant = (participants ?? []).find(
+    (participant) => participant.user_id === userId
+  )
 
-  /*
-   * -------------------------------------------------------
-   * 2. Make sure current user belongs to conversation
-   * -------------------------------------------------------
-   */
-
-  const isParticipant =
-    (participants ?? []).some(
-      (participant) =>
-        participant.user_id === userId
-    )
-
-  if (!isParticipant) {
+  if (!currentParticipant) {
     throw new Error(
       'You are not a participant in this conversation.'
     )
   }
 
-  /*
-   * -------------------------------------------------------
-   * 3. Find the other participant
-   * -------------------------------------------------------
-   */
+  const lastReadAt = currentParticipant.last_read_at ?? null
 
-  const otherParticipant =
-    (participants ?? []).find(
-      (participant) =>
-        participant.user_id !== userId
-    )
+  const otherParticipant = (participants ?? []).find(
+    (participant) => participant.user_id !== userId
+  )
 
   if (!otherParticipant) {
     return {
@@ -331,46 +243,37 @@ export async function fetchConversation(
       otherUserId: null,
       otherProfessional: null,
       job: null,
+      lastReadAt,
       updatedAt: conversation.updated_at,
     }
   }
 
-  const otherUserId =
-    otherParticipant.user_id
+  const otherUserId = otherParticipant.user_id
 
-  /*
-   * -------------------------------------------------------
-   * 4. Fetch profile, professional data and job
-   *    at the same time
-   * -------------------------------------------------------
-   */
+  const profilePromise = supabase
+    .from('profiles')
+    .select(`
+      id,
+      full_name,
+      avatar_url,
+      username,
+      account_type
+    `)
+    .eq('id', otherUserId)
+    .single()
 
-  const profilePromise =
-    supabase
-      .from('profiles')
-      .select(`
-        id,
-        full_name,
-        avatar_url,
-        username,
-        account_type
-      `)
-      .eq('id', otherUserId)
-      .single()
-
-  const professionalPromise =
-    supabase
-      .from('professionals')
-      .select(`
-        id,
-        headline,
-        rating,
-        completed_jobs,
-        is_available,
-        category_id
-      `)
-      .eq('id', otherUserId)
-      .maybeSingle()
+  const professionalPromise = supabase
+    .from('professionals')
+    .select(`
+      id,
+      headline,
+      rating,
+      completed_jobs,
+      is_available,
+      category_id
+    `)
+    .eq('id', otherUserId)
+    .maybeSingle()
 
   const jobPromise = conversation.job_id
     ? supabase
@@ -382,10 +285,7 @@ export async function fetchConversation(
           customer_id,
           accepted_professional_id
         `)
-        .eq(
-          'id',
-          conversation.job_id
-        )
+        .eq('id', conversation.job_id)
         .single()
     : Promise.resolve({
         data: null,
@@ -413,40 +313,24 @@ export async function fetchConversation(
 
   if (profileError) {
     console.error(
-      '❌ Could not fetch other user profile:',
+      'Could not fetch other user profile:',
       profileError
     )
-
     throw profileError
   }
 
-  if (professionalError) {
-    throw professionalError
-  }
-
-  if (jobError) {
-    throw jobError
-  }
-
-  /*
-   * -------------------------------------------------------
-   * 5. Return complete conversation identity
-   * -------------------------------------------------------
-   */
+  if (professionalError) throw professionalError
+  if (jobError) throw jobError
 
   return {
     id: conversation.id,
     jobId: conversation.job_id,
-
     otherUser,
     otherUserId,
-
     otherProfessional,
-
     job,
-
-    updatedAt:
-      conversation.updated_at,
+    lastReadAt,
+    updatedAt: conversation.updated_at,
   }
 }
 
@@ -456,26 +340,16 @@ export async function fetchConversation(
  * ---------------------------------------------------------
  */
 
-export async function fetchMessages(
-  conversationId
-) {
-  const {
-    data,
-    error,
-  } = await supabase
+export async function fetchMessages(conversationId) {
+  if (!conversationId) return []
+
+  const { data, error } = await supabase
     .from('messages')
     .select('*')
-    .eq(
-      'conversation_id',
-      conversationId
-    )
-    .order('created_at', {
-      ascending: true,
-    })
+    .eq('conversation_id', conversationId)
+    .order('created_at', { ascending: true })
 
-  if (error) {
-    throw error
-  }
+  if (error) throw error
 
   return data ?? []
 }
@@ -494,35 +368,20 @@ export async function sendMessage({
   imageUrl,
   metadata,
 }) {
-  const {
-    data,
-    error,
-  } = await supabase
+  const { data, error } = await supabase
     .from('messages')
     .insert({
-      conversation_id:
-        conversationId,
-
-      sender_id:
-        senderId,
-
+      conversation_id: conversationId,
+      sender_id: senderId,
       content,
-
-      message_type:
-        messageType,
-
-      image_url:
-        imageUrl,
-
-      metadata:
-        metadata ?? {},
+      message_type: messageType,
+      image_url: imageUrl,
+      metadata: metadata ?? {},
     })
     .select()
     .single()
 
-  if (error) {
-    throw error
-  }
+  if (error) throw error
 
   return data
 }
@@ -537,28 +396,17 @@ export async function markConversationRead(
   conversationId,
   userId
 ) {
-  const {
-    error,
-  } = await supabase
-    .from(
-      'conversation_participants'
-    )
-    .update({
-      last_read_at:
-        new Date().toISOString(),
-    })
-    .eq(
-      'conversation_id',
-      conversationId
-    )
-    .eq(
-      'user_id',
-      userId
-    )
+  if (!conversationId || !userId) return
 
-  if (error) {
-    throw error
-  }
+  const { error } = await supabase
+    .from('conversation_participants')
+    .update({
+      last_read_at: new Date().toISOString(),
+    })
+    .eq('conversation_id', conversationId)
+    .eq('user_id', userId)
+
+  if (error) throw error
 }
 
 /*
@@ -569,31 +417,60 @@ export async function markConversationRead(
 
 export function subscribeToMessages(
   conversationId,
-  onInsert
+  onMessage
 ) {
-  const channel =
-    supabase
-      .channel(
-        `messages:${conversationId}`
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'messages',
-          filter:
-            `conversation_id=eq.${conversationId}`,
-        },
-        (payload) =>
-          onInsert(
-            payload.new
-          )
-      )
-      .subscribe()
+  if (
+    !conversationId ||
+    typeof onMessage !== 'function'
+  ) {
+    return () => {}
+  }
 
-  return () =>
-    supabase.removeChannel(
-      channel
+  const channel = supabase
+    .channel(`messages:${conversationId}`)
+    .on(
+      'postgres_changes',
+      {
+        event: '*',
+        schema: 'public',
+        table: 'messages',
+        filter: `conversation_id=eq.${conversationId}`,
+      },
+      (payload) => {
+        onMessage(payload)
+      }
     )
+    .subscribe()
+
+  return () => {
+    supabase.removeChannel(channel)
+  }
+}
+
+/*
+ * ---------------------------------------------------------
+ * DELETE MESSAGE
+ * ---------------------------------------------------------
+ */
+
+export async function deleteMessage(messageId) {
+  if (!messageId) {
+    throw new Error('A message ID is required.')
+  }
+
+  const { data, error } = await supabase
+    .from('messages')
+    .delete()
+    .eq('id', messageId)
+    .select('id')
+
+  if (error) throw error
+
+  if (!data?.length) {
+    throw new Error(
+      'Message could not be deleted. You may not own this message.'
+    )
+  }
+
+  return data[0]
 }

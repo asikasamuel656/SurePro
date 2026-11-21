@@ -8,6 +8,8 @@ import { JobStatusBadge } from '../components/JobStatusBadge'
 import { JobStatusTimeline } from '../components/JobStatusTimeline'
 import { QuoteCard } from '@/components/cards/QuoteCard'
 import { QuoteForm } from '../components/QuoteForm'
+import { useEditQuote } from '../hooks/useEditQuote'
+import { useWithdrawQuote } from '../hooks/useWithdrawQuote'
 
 import { useJob } from '../hooks/useJob'
 import { useAcceptQuote } from '../hooks/useAcceptQuote'
@@ -60,10 +62,12 @@ export function JobDetails() {
   const [rejectingQuoteId, setRejectingQuoteId] =
     useState(null)
 
-  const {
+  const [isEditingQuote, setIsEditingQuote] =
+  useState(false)
+
+   const {
     job,
     quotes,
-    events,
     photos,
     isLoading,
     isError,
@@ -72,6 +76,9 @@ export function JobDetails() {
   const acceptQuoteMutation = useAcceptQuote(id)
 
   const submitQuoteMutation = useSubmitQuote(id)
+
+  const editQuoteMutation = useEditQuote(id)
+  const withdrawQuoteMutation = useWithdrawQuote(id)
 
   const {
     setStatus,
@@ -124,7 +131,24 @@ export function JobDetails() {
     })
   }
 
-  if (isLoading || !job) {
+  const handleWithdrawQuote = async () => {
+  if (!myQuote) return
+
+  const confirmed = window.confirm(
+    'Are you sure you want to withdraw this quote?'
+  )
+
+  if (!confirmed) return
+
+  try {
+    await withdrawQuoteMutation.mutateAsync(myQuote.id)
+    setIsEditingQuote(false)
+  } catch (error) {
+    console.error('Failed to withdraw quote:', error)
+  }
+}
+
+  if (isLoading) {
     return (
       <div className="min-h-dvh bg-bg">
         <div className="mobile-shell mx-auto flex min-h-dvh max-w-2xl items-center justify-center">
@@ -139,6 +163,16 @@ export function JobDetails() {
       <div className="min-h-dvh bg-bg">
         <div className="mobile-shell mx-auto flex min-h-dvh max-w-2xl items-center justify-center px-6 text-center text-sm text-muted">
           Couldn't load this job.
+        </div>
+      </div>
+    )
+  }
+
+  if (!job) {
+    return (
+      <div className="min-h-dvh bg-bg">
+        <div className="mobile-shell mx-auto flex min-h-dvh max-w-2xl items-center justify-center px-6 text-center text-sm text-muted">
+          Job not found.
         </div>
       </div>
     )
@@ -343,7 +377,52 @@ export function JobDetails() {
                     showAcceptAction={false}
                     showRejectAction={false}
                     isProfessionalView
+                    onEdit={() => setIsEditingQuote(true)}
+                    onWithdraw={handleWithdrawQuote}
+                    isWithdrawing={withdrawQuoteMutation.isPending}
+                    actionError={withdrawQuoteMutation.error}
                   />
+
+                  {isEditingQuote && myQuote.status === 'pending' && (
+                    <div className="mt-4 rounded-card border border-border bg-surface p-4">
+                      <h3 className="mb-3 font-semibold text-ink">
+                        Edit your quote
+                      </h3>
+
+                      <QuoteForm
+                        initialValues={myQuote}
+                        submitLabel="Save changes"
+                        onSubmit={(values) => {
+                          editQuoteMutation.mutate(
+                            {
+                              quoteId: myQuote.id,
+                              amount: values.amount,
+                              message: values.message,
+                              proposedDate: values.proposedDate,
+                              proposedTime: values.proposedTime,
+                            },
+                            {
+                              onSuccess: () => {
+                                setIsEditingQuote(false)
+                              },
+                            }
+                          )
+                        }}
+                        isSubmitting={editQuoteMutation.isPending}
+                        error={editQuoteMutation.error}
+                      />
+
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="mt-2 w-full"
+                        onClick={() => setIsEditingQuote(false)}
+                        disabled={editQuoteMutation.isPending}
+                      >
+                        Cancel editing
+                      </Button>
+                    </div>
+                  )}
                 </>
               ) : (
                 !isOwner &&
@@ -361,9 +440,7 @@ export function JobDetails() {
                           ...values,
                         })
                       }
-                      isSubmitting={
-                        submitQuoteMutation.isPending
-                      }
+                      isSubmitting={submitQuoteMutation.isPending}
                       error={submitQuoteMutation.error}
                     />
                   </>

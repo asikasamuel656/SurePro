@@ -98,46 +98,63 @@ export async function createQuote({
   return data
 }
 
-export async function updateQuoteStatus(quoteId, status) {
+export async function editQuote({
+  quoteId,
+  amount,
+  message,
+  proposedDate,
+  proposedTime,
+}) {
   if (!quoteId) throw new Error('Quote is required.')
 
-  const allowedStatuses = [
-    'pending',
-    'accepted',
-    'rejected',
-    'withdrawn',
-  ]
+  const numericAmount = Number(amount)
 
-  if (!allowedStatuses.includes(status)) {
-    throw new Error('Invalid quote status.')
+  if (!Number.isFinite(numericAmount) || numericAmount <= 0) {
+    throw new Error('Enter a valid quote amount.')
   }
 
+  const { error } = await supabase.rpc('edit_job_quote', {
+    p_quote_id: quoteId,
+    p_amount: numericAmount,
+    p_message: message?.trim() || null,
+    p_proposed_date: proposedDate || null,
+    p_proposed_time: proposedTime || null,
+  })
+
+  if (error) {
+    console.error('Failed to edit quote:', error)
+    throw error
+  }
+
+  return fetchQuoteById(quoteId)
+}
+
+export async function withdrawQuote(quoteId) {
+  if (!quoteId) throw new Error('Quote is required.')
+
+  const { error } = await supabase.rpc('withdraw_job_quote', {
+    p_quote_id: quoteId,
+  })
+
+  if (error) {
+    console.error('Failed to withdraw quote:', error)
+    throw error
+  }
+
+  return fetchQuoteById(quoteId)
+}
+
+async function fetchQuoteById(quoteId) {
   const { data, error } = await supabase
     .from('quotes')
-    .update({
-      status,
-      updated_at: new Date().toISOString(),
-    })
-    .eq('id', quoteId)
     .select(QUOTE_SELECT)
+    .eq('id', quoteId)
     .single()
 
   if (error) {
-    console.error('Failed to update quote:', error)
+    console.error('Failed to fetch updated quote:', error)
     throw error
   }
 
   return data
-}
-
-export async function acceptQuote(quoteId) {
-  return updateQuoteStatus(quoteId, 'accepted')
-}
-
-export async function rejectQuote(quoteId) {
-  return updateQuoteStatus(quoteId, 'rejected')
-}
-
-export async function withdrawQuote(quoteId) {
-  return updateQuoteStatus(quoteId, 'withdrawn')
 }
